@@ -1,12 +1,15 @@
 import "importUtil"
 ensureImport "mathUtil"
+ensureImport "gameInput"
+ensureImport "shot"
 
 speed = 100  // distance units per second
 
-Craft = new Sprite
+globals.Craft = new Sprite
 Craft.targetRot = 0
 Craft.vx = 0
 Craft.vy = 0
+Craft.fireCooldown = 0
 
 Craft.updateFlares = function
 	craft.flareBox.x = craft.x
@@ -21,16 +24,35 @@ Craft.updateFlares = function
 	craft.flares[1].scale = 0.7 + rnd * 0.4
 end function
 
+Craft.wx = function
+	return self.x - renderer.background.x
+end function
+
+Craft.wy = function
+	return self.y - renderer.background.y
+end function
+
+Craft.fire = function
+	craft.fireBox.x = craft.x
+	craft.fireBox.y = craft.y
+	craft.fireBox.rotation = craft.rotation
+	corners = craft.fireBox.corners
+	shot.spawn corners[0][0] - renderer.background.x, 
+	  corners[0][1] - renderer.background.y
+	shot.spawn corners[3][0] - renderer.background.x, 
+	  corners[3][1] - renderer.background.y
+end function
+
 Craft.handleInputs = function(dt=0.017)
-	inpX = key.axis("Horizontal")
-	inpY = key.axis("Vertical")
+	inpX = gameInput.flightHorz
+	inpY = gameInput.flightVert
 	self.targetRot = -60 * inpX
 	
 	self.rotation = mathUtil.moveTowards(self.rotation, self.targetRot, 120*dt)
 	
+	self.vx = mathUtil.moveTowards(self.vx, 0, 1000 * dt)
 	self.vx = mathUtil.clamp(self.vx + inpX * 2000 * dt, -500, 500) * 0.99
 	self.x += self.vx * dt
-	if not inpX then self.x = 480 + (self.x - 480) * 0.95
 	if self.x < 100 then
 		self.x = 100
 //		self.vx = 0
@@ -39,9 +61,9 @@ Craft.handleInputs = function(dt=0.017)
 //		self.vx = 0
 	end if
 	
+	self.vy = mathUtil.moveTowards(self.vy, 0, 1000 * dt)
 	self.vy = mathUtil.clamp(self.vy + inpY * 2000 * dt, -400, 400) * 0.99
 	self.y += self.vy * dt
-	if not inpY then self.y = 320 + (self.y - 320) * 0.95
 	if self.y < 50 then
 		self.y = 50
 		self.vy = 0
@@ -50,11 +72,18 @@ Craft.handleInputs = function(dt=0.017)
 		self.vy = 0
 	end if
 	
+	self.fireCooldown -= dt
+	if self.fireCooldown <= 0 and gameInput.fire then
+		self.fireCooldown = 0.2
+		self.fire
+	end if
 end function
 
 Craft.update = function(dt=0.017)
 	self.handleInputs dt
 	self.updateFlares
+//	text.row = 25; print "wx:  " + round(self.wx) + "   wy:  " + round(self.wy) + "    "
+//	print "bgx: " + round(renderer.background.x) + "   bgy: " + round(renderer.background.y) + "    "
 end function
 
 init = function(spriteDisp)
@@ -74,10 +103,13 @@ init = function(spriteDisp)
 		craft.flares.push fl
 		spriteDisp.sprites.push fl
 	end for
-	craft.flareBox = new Bounds
+	craft.flareBox = new Bounds  // used to calculate position of engine flares
 	craft.flareBox.width = 72*craft.scale
 	craft.flareBox.height = 24*craft.scale
 	craft.updateFlares
+	craft.fireBox = new Bounds  // used to calculate position of guns
+	craft.fireBox.width = 156
+	craft.fireBox.height = 30
 end function
 
 
