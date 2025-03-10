@@ -2,6 +2,7 @@ import "importUtil"
 ensureImport "mathUtil"
 ensureImport "gameInput"
 ensureImport "shot"
+ensureImport "disp"
 
 speed = 100  // distance units per second
 
@@ -13,6 +14,9 @@ Craft.fireCooldown = 0
 Craft.redTill = null
 Craft.shield = 100
 Craft.shieldRegen = 1 // shield points/sec
+Craft.rolling = false
+Craft.wasInpRollDown = [false, false]  // was left, right roll pressed last frame?
+Craft.lastRollInpTime = [-1, -1]  // input time for left, right rolls
 
 Craft.updateFlares = function
 	craft.flareBox.x = craft.x
@@ -28,11 +32,11 @@ Craft.updateFlares = function
 end function
 
 Craft.wx = function
-	return self.x - renderer.background.x
+	return self.x - disp.background.x
 end function
 
 Craft.wy = function
-	return self.y - renderer.background.y
+	return self.y - disp.background.y
 end function
 
 Craft.wz = 0.1
@@ -42,10 +46,10 @@ Craft.fire = function
 	craft.fireBox.y = craft.y
 	craft.fireBox.rotation = craft.rotation
 	corners = craft.fireBox.corners
-	shot.spawn corners[0][0] - renderer.background.x, 
-	  corners[0][1] - renderer.background.y
-	shot.spawn corners[3][0] - renderer.background.x, 
-	  corners[3][1] - renderer.background.y
+	shot.spawn corners[0][0] - disp.background.x, 
+	  corners[0][1] - disp.background.y
+	shot.spawn corners[3][0] - disp.background.x, 
+	  corners[3][1] - disp.background.y
 end function
 
 Craft.handleInputs = function(dt=0.017)
@@ -53,10 +57,32 @@ Craft.handleInputs = function(dt=0.017)
 	inpY = gameInput.flightVert
 	self.targetRot = -60 * inpX
 	
-	self.rotation = mathUtil.moveTowards(self.rotation, self.targetRot, 120*dt)
+	for i in [0,1]
+		if i then rollPressed = (inpX > 0.1) else rollPressed = (inpX < -0.1)
+		justPressed = rollPressed and not self.wasInpRollDown[i]
+		if justPressed then
+			dblTime = time - self.lastRollInpTime[i]
+			self.rolling = (dblTime < 0.5)
+			self.lastRollInpTime[i] = time
+		end if
+		self.wasInpRollDown[i] = rollPressed
+	end for
+	if -0.1 <= inpX <= 0.1 then self.rolling = false
+	if self.rolling then
+		self.rotation -= 360 * inpX * dt
+		self.rotation = (self.rotation + 36000) % 360
+		if self.rotation > 180 then self.rotation -= 360
+		self.targetRot = self.rotation
+		radians = self.rotation * pi/180
+		s = sign(inpX)
+		self.vx = s * 800 * cos(radians)
+		self.vy = s * 800 * sin(radians) + 100 * inpY
+	else
+		self.rotation = mathUtil.moveTowards(self.rotation, self.targetRot, 120*dt)		
+		self.vx = mathUtil.moveTowards(self.vx, 0, 1000 * dt)
+		self.vx = mathUtil.clamp(self.vx + inpX * 2000 * dt, -50000, 50000) * 0.99
+	end if
 	
-	self.vx = mathUtil.moveTowards(self.vx, 0, 1000 * dt)
-	self.vx = mathUtil.clamp(self.vx + inpX * 2000 * dt, -500, 500) * 0.99
 	self.x += self.vx * dt
 	if self.x < 100 then
 		self.x = 100
@@ -88,7 +114,7 @@ Craft.update = function(dt=0.017)
 	self.handleInputs dt
 	self.updateFlares
 //	text.row = 25; print "wx:  " + round(self.wx) + "   wy:  " + round(self.wy) + "    "
-//	print "bgx: " + round(renderer.background.x) + "   bgy: " + round(renderer.background.y) + "    "
+//	print "bgx: " + round(disp.background.x) + "   bgy: " + round(disp.background.y) + "    "
 	if self.redTill != null and time > self.redTill then
 		self.tint = color.white
 		self.redTill = null
@@ -96,11 +122,11 @@ Craft.update = function(dt=0.017)
 	self.shield = mathUtil.clamp(self.shield + self.shieldRegen * dt, 0, 100)
 end function
 
-Craft.takeHit = function(enemyShot)
-	sounds.electricalHit.play3D self
+Craft.takeHit = function(sound, damage)
+	sound.play3D self
 	self.tint = "#FFAAAA"
 	self.redTill = time + 0.25
-	self.shield -= enemyShot.damage
+	self.shield -= damage
 	if self.shield <= 0 then
 		hud.update
 		text.color = color.orange
@@ -113,11 +139,11 @@ Craft.takeHit = function(enemyShot)
 	end if
 end function
 
-init = function(spriteDisp)
+init = function
 	outer.craft = new Craft
 	craft.image = file.loadImage("/usr/pics/fighter.png")
 	craft.scale = 0.5
-	spriteDisp.sprites.push craft
+	disp.fg.sprites.push craft
 	craft.x = 480
 	craft.y = 320
 	
@@ -128,7 +154,7 @@ init = function(spriteDisp)
 		fl.image = flarePic
 		fl.scale = craft.scale
 		craft.flares.push fl
-		spriteDisp.sprites.push fl
+		disp.fg.sprites.push fl
 	end for
 	craft.flareBox = new Bounds  // used to calculate position of engine flares
 	craft.flareBox.width = 72*craft.scale
@@ -141,8 +167,8 @@ end function
 
 
 test = function
-	clear
-	init display(4)
+	disp.init
+	init
 	while true
 		craft.update
 		yield

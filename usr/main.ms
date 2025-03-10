@@ -10,13 +10,13 @@ ensureImport "enemy"
 ensureImport "sounds"
 ensureImport "vfx"
 ensureImport "hud"
+ensureImport "levels"
+ensureImport "disp"
 
 setup = function
-	clear
-	globals.spriteDisp = display(4) // HACK
-	renderer.init spriteDisp
-	obstacles.init spriteDisp
-	fighter.init spriteDisp
+	disp.init
+	renderer.init
+	fighter.init
 	sounds.init
 	vfx.init
 	globals.score = 0
@@ -37,6 +37,7 @@ end function
 
 // Main program
 setup
+levels.startLevelWave 2, 1
 nextEnemySpawnTime = time + 2
 while true
 	if time > nextEnemySpawnTime then

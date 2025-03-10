@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Define your itch.io user name and project name here:
+USER=joestrout
+PROJECT=skyguard
+
+# Also define the name of the folder containing your files
+# (i.e., the folder you mount in Mini Micro, which we need
+# to turn into a .minidisk.)
+SOURCEFOLDER=usr
+
+if [ ! -d "MiniMicro" ]; then
+    echo "MiniMicro folder not found. Downloading..."
+    curl -L -o minimicro-webgl.zip https://miniscript.org/files/minimicro-webgl.zip
+    unzip minimicro-webgl.zip -d MiniMicro
+    rm minimicro-webgl.zip
+fi
+
+echo "Clearing out .DS_Store files..."
+rm $SOURCEFOLDER/.DS_Stor*
+rm $SOURCEFOLDER/*/.DS_Stor*
+rm $SOURCEFOLDER/*/*/.DS_Stor*
+
+echo
+echo "Zipping user.minidisk..."
+rm MiniMicro/StreamingAssets/user.minidisk
+cd $SOURCEFOLDER
+zip -r ../MiniMicro/StreamingAssets/user.minidisk *
+
+echo
+echo "Preparing/uploading HTML5 build"
+cd ../MiniMicro
+rm ../archive.zip
+zip -r ../archive.zip *
+cd ..
+./butler push archive.zip $USER/$PROJECT:html5
+
+echo "https://$USER.itch.io/$PROJECT"
+open "https://$USER.itch.io/$PROJECT"

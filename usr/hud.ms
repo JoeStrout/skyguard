@@ -14,8 +14,8 @@ init = function
 	gfx.fillRect 0, 600, 960, 40, "#00000088"
 end function
 
-update = function
-	if score != _lastScore then
+update = function(forceRedraw = false)
+	if score != _lastScore or forceRedraw then
 		text.row = 25
 		text.column = 53
 		s = ("000000" + score)[-6:]
@@ -24,7 +24,7 @@ update = function
 	end if
 	
 	s = str(round(fighter.craft.shield))
-	if s != _lastShield then
+	if s != _lastShield or forceRedraw then
 		text.row = 25
 		text.column = 1
 		print "SHIELD: " + s + "   "

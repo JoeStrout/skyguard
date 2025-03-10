@@ -28,7 +28,11 @@ Enemy.update = function(dt=0.017)
 		self.tint = color.lerp("#FFFFFF00", "#FFFFFFFF", (maxDist - self.wz) / 100)
 	end if
 	if self.secsPerFire != null and time > self.nextFireTime then
-		EnemyShot.Spawn self
+		shot = EnemyShot.Spawn(self)
+		if shot.wz/(shot.approachSpeed/60) < 5 then
+			// ensure shot takes at least 5 frames to hit
+			shot.approachSpeed = shot.wz / 5 * 60
+		end if
 		self.nextFireTime = time + self.secsPerFire * (0.8 + rnd * 0.4)
 	end if
 end function
@@ -36,15 +40,15 @@ end function
 Enemy.hitBy = function(projectile)
 	dSqr = (projectile.wx - self.wx)^2 + ((projectile.wy - self.wy) / 0.6)^2
 //	print "dx: " + round(projectile.wx - self.wx) +   "   dy: " + round((projectile.wy - self.wy)) + "   dSqr: " + round(dSqr) + "  dist: " + round(sqrt(dSqr)) + "    "
-	if dSqr > 2500 then return false
+	if dSqr > 3500 then return false
 	self.vanish
-	vfx.spawnExplosion self.wx, self.wy, self.wz - 1
+	vfx.spawn vfx.Explosion, self.wx, self.wy, self.wz - 1
 	globals.score += self.scoreValue
 	return true
 end function
 
 Enemy.vanish = function
-	spriteDisp.sprites.removeVal self
+	disp.sprites.removeVal self
 	Enemy.Instances.removeVal self
 end function
 
@@ -64,7 +68,7 @@ EnemyShot.image = EnemyShot.frames[0]
 EnemyShot.Spawn = function(owner)
 	noob = new EnemyShot
 	noob.wx = owner.wx; noob.wy = owner.wy; noob.wz = owner.wz-1
-	spriteDisp.sprites.insert 1, noob
+	disp.sprites.insert 1, noob
 	Enemy.Instances.push noob
 	return noob
 end function	
@@ -74,7 +78,7 @@ EnemyShot.update = function(dt=0.017)
 		// We've reached the level of the fighter; did we hit it?
 		dSqr = (self.x - fighter.craft.x)^2 + (self.y - fighter.craft.y)^2
 		//print "Dist: " + round(sqrt(dSqr))
-		if dSqr < 10000 then fighter.craft.takeHit self
+		if dSqr < 10000 then fighter.craft.takeHit sounds.electricalHit, self.damage
 		self.vanish
 		return
 	end if
@@ -98,7 +102,7 @@ spawn = function
 	noob.wx = mathUtil.randRange(-760, 760)
 	noob.wy = mathUtil.randRange(-490, 490)
 	noob.wz = renderer.maxDist
-	spriteDisp.sprites.insert 1, noob
+	disp.sprites.insert 1, noob
 	Enemy.Instances.push noob
 	return noob
 end function

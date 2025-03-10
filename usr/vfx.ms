@@ -11,12 +11,19 @@ init = function
 		y += size
 	end while
 	outer.explosionFrames = frames
+	
+	Explosion.frames = explosionFrames
+	Explosion.sound = sounds.explosion_1
+
+	ShotSplash.frames = explosionFrames[:2] * 3
+	ShotSplash.sound = sounds.laserHit
 end function
 
 VfxSprite = new Sprite3D
 VfxSprite.frames = null
 VfxSprite.curFrameNum = -1
 VfxSprite.Instances = []
+VfxSprite.sound = null
 
 VfxSprite.update = function(dt)
 	self.curFrameNum += 1
@@ -29,18 +36,29 @@ VfxSprite.update = function(dt)
 end function
 
 VfxSprite.vanish = function
-	spriteDisp.sprites.removeVal self
+	disp.sprites.removeVal self
 	VfxSprite.Instances.removeVal self
 end function
 
-spawnExplosion = function(wx, wy, wz)
-	boom = new VfxSprite
-	boom.frames = explosionFrames
-	boom.wx = wx; boom.wy = wy; boom.wz = wz
-	VfxSprite.Instances.push boom
-	spriteDisp.sprites.push boom
-	boom.update
-	sounds.explosion_1.play3D boom
+Explosion = new VfxSprite
+
+ShotSplash = new VfxSprite
+
+ShotSplash.update = function(dt)
+	super.update
+	if self.curFrameNum <= 6 then
+		self.scale *= [1, 1.2, 1.5, 1.2, 1, 0.8, 0.4][self.curFrameNum]
+	end if
+end function
+
+spawn = function(vfxClass, wx, wy, wz)
+	effect = new vfxClass
+	effect.wx = wx; effect.wy = wy; effect.wz = wz
+	VfxSprite.Instances.push effect
+	disp.sprites.push effect
+	effect.update
+	if effect.sound then effect.sound.play3D effect
+	return effect
 end function
 
 updateAll = function(dt=0.017)

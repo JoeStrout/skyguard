@@ -1,2 +1,1 @@
 // Little global utility functions.
-

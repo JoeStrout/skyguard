@@ -14,7 +14,7 @@ Shot.update = function(dt=0.017)
 	if self.wz > self.maxDist then
 		self.vanish
 	else
-		sprites = spriteDisp.sprites
+		sprites = disp.sprites
 		idx = sprites.indexOf(self)
 		wz = self.wz
 		trailRange = self.trail.indexes
@@ -39,9 +39,9 @@ Shot.update = function(dt=0.017)
 end function
 
 Shot.vanish = function
-	spriteDisp.sprites.removeVal self
+	disp.sprites.removeVal self
 	for tp in self.trail
-		spriteDisp.sprites.removeVal tp
+		disp.sprites.removeVal tp
 	end for
 	Shot.Instances.removeVal self
 end function
@@ -51,8 +51,7 @@ spawn = function(wx, wy)
 	shot.wx = wx
 	shot.wy = wy
 	shot.wz = 1
-	idx = spriteDisp.sprites.indexOf(fighter.craft)
-	spriteDisp.sprites.insert idx, shot
+	disp.sprites.push shot
 	shot.trail = []
 	for i in [1,2]
 		trailSp = new Sprite3D
@@ -62,7 +61,7 @@ spawn = function(wx, wy)
 		trailSp.wy = wy
 		trailSp.tz = 1 - i*0.1
 		shot.trail.push trailSp
-		spriteDisp.sprites.insert idx+i, trailSp		
+		disp.sprites.push trailSp		
 	end for
 	Shot.Instances.push shot
 	return shot

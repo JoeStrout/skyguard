@@ -8,6 +8,7 @@ maxDist = 2000
 
 screenXY = function(wXYZ)
 	p = 300 / (300 + wXYZ.wz)
+	background = disp.background
 	return {"x": mathUtil.lerp(480, background.x + wXYZ.wx, p),
 			"y": mathUtil.lerp(320, background.y + wXYZ.wy, p) }
 end function
@@ -17,6 +18,11 @@ globals.Sprite3D = new Sprite
 Sprite3D.wx = 0		// pixels relative to center of background when scale=1
 Sprite3D.wy = 0		
 Sprite3D.wz = maxDist	// distance from camera
+Sprite.fadeOutDist = 20
+
+Sprite3D.isHitByPoint = function(xy)
+	return false
+end function
 
 Sprite3D.hitBy = function(projectile)
 	return false
@@ -28,7 +34,7 @@ end function
 
 Sprite3D.reset = function
 	self.wx = mathUtil.randRange(-3000, 3000)
-	self.wy = mathUtil.randRange(-500, 500)
+	self.wy = mathUtil.randRange(-1000, 1000)
 	self.wz = maxDist
 	self.tint = "#FFFFFF"
 end function
@@ -37,6 +43,7 @@ Sprite3D.update = function(dz=0, resort=false, fadeInOut=false)
 	self.wz += dz
 	if self.wz < 0.1 then self.wz = 0.1
 	p = self.perspectiveFactor
+	background = disp.background
 	self.x = mathUtil.lerp(480, background.x + self.wx, p)
 //	self.y = background.y + self.wy * p
 	self.y = mathUtil.lerp(320, background.y + self.wy, p)
@@ -46,53 +53,47 @@ Sprite3D.update = function(dz=0, resort=false, fadeInOut=false)
 		maxDist = renderer.maxDist
 		if self.wz > maxDist - 100 then
 			self.tint = color.lerp("#FFFFFF00", "#FFFFFFFF", (maxDist - self.wz) / 100)
-		else if self.wz < 20 then
-			self.tint = color.lerp("#FFFFFF00", "#FFFFFFFF", self.wz/20)
+		else if self.wz < self.fadeOutDist then
+			self.tint = color.lerp("#FFFFFF00", self.tint, self.wz/self.fadeOutDist)
 		end if
 	end if
 end function
 
 Sprite3D.resort = function
-	sprites = spriteDisp.sprites
+	sprites = disp.sprites
 	idx = sprites.indexOf(self)
 	wz = self.wz
 	while idx > 0 and sprites[idx-1].wz < wz
 		sprites.swap idx, idx - 1
 		idx -= 1
 	end while
-	maxIdx = sprites.indexOf(fighter.craft) - 1
+	maxIdx = sprites.len - 1
 	while idx < maxIdx and sprites[idx+1].wz > wz
 		sprites.swap idx, idx + 1
 		idx += 1
 	end while
 end function
 
-init = function(spriteDisp)
-	outer.background = new Sprite
-	background.image = file.loadImage("/usr/pics/sky-Earth.png")
-	background.scale = 2
-	background.x = 480
-	background.y = 320
-	background.wz = maxDist*1000  // (just so all sprites have a wz)
-	spriteDisp.sprites.insert 0, background
+init = function
+	// Nothing to do!  :)
 end function
 
 update = function(dt=0.017)
 	fc = fighter.craft
+	background = disp.background
 	background.x = mathUtil.clamp(background.x - (fc.x-480)*dt, 0, 960)
-	background.y = mathUtil.clamp(background.y - (fc.y-320)*dt, 0, 640)
-	
+	background.y = mathUtil.clamp(background.y - (fc.y-320)*dt, 0, 640)	
 end function
 
 
 test = function
 	clear
-	globals.spriteDisp = display(4)	 // HACK
 	init
-	obstacles.init spriteDisp
+	obstacles.init
 	
 	while true
 		yield
+		background = disp.background
 		background.x = mathUtil.clamp(background.x - key.axis("Horizontal")*2, 0, 960)
 		background.y = mathUtil.clamp(background.y - key.axis("Vertical")*2, 0, 640)
 		obstacles.update	
