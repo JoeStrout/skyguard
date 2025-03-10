@@ -25,7 +25,6 @@ Shot.update = function(dt=0.017)
 		end for
 		while idx > 0 and sprites[idx-1].wz < wz
 			if sprites[idx-1].hitBy(self) then
-				print "Shot hit " + sprites[idx-1].image.path
 				self.vanish
 				break
 			else

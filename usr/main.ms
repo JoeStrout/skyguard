@@ -9,6 +9,7 @@ ensureImport "shot"
 ensureImport "enemy"
 ensureImport "sounds"
 ensureImport "vfx"
+ensureImport "hud"
 
 setup = function
 	clear
@@ -18,6 +19,8 @@ setup = function
 	fighter.init spriteDisp
 	sounds.init
 	vfx.init
+	globals.score = 0
+	hud.init
 end function
 
 update = function(dt=0.017)
@@ -29,6 +32,7 @@ update = function(dt=0.017)
 	shot.updateAll dt
 	enemy.updateAll dt
 	vfx.updateAll dt
+	hud.update
 end function
 
 // Main program

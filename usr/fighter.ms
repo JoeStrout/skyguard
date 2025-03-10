@@ -10,6 +10,9 @@ Craft.targetRot = 0
 Craft.vx = 0
 Craft.vy = 0
 Craft.fireCooldown = 0
+Craft.redTill = null
+Craft.shield = 100
+Craft.shieldRegen = 1 // shield points/sec
 
 Craft.updateFlares = function
 	craft.flareBox.x = craft.x
@@ -31,6 +34,8 @@ end function
 Craft.wy = function
 	return self.y - renderer.background.y
 end function
+
+Craft.wz = 0.1
 
 Craft.fire = function
 	craft.fireBox.x = craft.x
@@ -84,6 +89,28 @@ Craft.update = function(dt=0.017)
 	self.updateFlares
 //	text.row = 25; print "wx:  " + round(self.wx) + "   wy:  " + round(self.wy) + "    "
 //	print "bgx: " + round(renderer.background.x) + "   bgy: " + round(renderer.background.y) + "    "
+	if self.redTill != null and time > self.redTill then
+		self.tint = color.white
+		self.redTill = null
+	end if
+	self.shield = mathUtil.clamp(self.shield + self.shieldRegen * dt, 0, 100)
+end function
+
+Craft.takeHit = function(enemyShot)
+	sounds.electricalHit.play3D self
+	self.tint = "#FFAAAA"
+	self.redTill = time + 0.25
+	self.shield -= enemyShot.damage
+	if self.shield <= 0 then
+		hud.update
+		text.color = color.orange
+		text.row = 5
+		print "GAME OVER"
+		_printMark "To play again, type `run` and press Return."
+		wait
+		key.clear
+		exit
+	end if
 end function
 
 init = function(spriteDisp)
