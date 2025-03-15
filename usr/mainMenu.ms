@@ -4,11 +4,15 @@ import "events"
 
 gfx.drawImage file.loadImage("/usr/pics/titleScreen.png")
 
+if not env.hasIndex("bgm") then env.bgm = true
+if not env.hasIndex("invertY") then env.invertY = false
+
 fadeOut = function
 	display(0).mode = displayMode.solidColor
 	fader = display(0)
 	for alpha in range(0, 255, 3)
 		fader.color = color.rgba(0,0,0, alpha)
+		if bgm then bgm.adjust 1 - alpha/255
 		yield
 	end for
 end function
@@ -69,7 +73,20 @@ for i in [0,1]
 	cb.x = 50
 	cb.y = [105, 55][i]
 	cb.start
+	checkboxes.push cb
 end for
+if env.bgm then checkboxes[0].tint = color.white else checkboxes[0].tint = color.clear
+checkboxes[0].onClick = function
+	env.bgm = not env.bgm
+	bgm.adjust env.bgm
+	if env.bgm then self.tint = color.white else self.tint = color.clear
+end function
+if env.invertY then checkboxes[1].tint = color.white else checkboxes[1].tint = color.clear
+checkboxes[1].onClick = function
+	env.invertY = not env.invertY
+	if env.invertY then self.tint = color.white else self.tint = color.clear
+end function
+
 
 playBtn = new events.EventSprite
 playBtn.images = [
@@ -100,9 +117,22 @@ playBtn.onDragEnd = function
 		events.spriteDisplay.clear
 		// ToDo: investigate!
 		
+		Sound.stopAll
 		reset; run "main"
 	end if
 end function
 playBtn.start
+
+Sound.stopAll
+bgm = file.loadSound("/usr/sounds/titleScreenMusic.ogg")
+bgm.loop = true
+bgm.play env.bgm
+
+if env.hasIndex("lastScore") then
+	s = "000000" + env.lastScore
+	text.color = color.gray
+	text.row = 11; text.column = 2
+	print "LAST SCORE: " + s[-6:]
+end if
 
 events.eventLoop.run

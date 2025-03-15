@@ -22,6 +22,13 @@ setup = function
 	globals.score = 0
 	hud.init
 	if not (env.hasIndex("curLevel") and 0 < env.curLevel <= 3) then env.curLevel = 1
+	if env.hasIndex("bgm") and env.bgm then
+		outer.bgm = file.loadSound("/usr/sounds/gameMusicLoop.ogg")
+		bgm.loop = true
+		bgm.play
+	else
+		bgm = null
+	end if
 end function
 
 update = function(dt=0.017)
@@ -34,6 +41,24 @@ update = function(dt=0.017)
 	enemy.updateAll dt
 	vfx.updateAll dt
 	hud.update
+end function
+
+endGame = function
+	env.lastScore = score
+	text.row = 14; text.column = 29
+	text.color = "#FFAAAA"
+	print "GAME OVER"
+	display(0).mode = displayMode.solidColor
+	fader = display(0)
+	for alpha in range(0, 255, 1)
+		fader.color = color.rgba(0,0,0, alpha)
+		if bgm then bgm.adjust 1 - alpha/255
+		yield
+	end for
+	key.clear
+	clear
+	Sound.stopAll
+	reset; run "mainMenu"
 end function
 
 // Main program

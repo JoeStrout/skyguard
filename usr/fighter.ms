@@ -55,6 +55,7 @@ end function
 Craft.handleInputs = function(dt=0.017)
 	inpX = gameInput.flightHorz
 	inpY = gameInput.flightVert
+	if env.invertY then inpY = -inpY
 	self.targetRot = -60 * inpX
 	
 	for i in [0,1]
@@ -128,14 +129,9 @@ Craft.takeHit = function(sound, damage)
 	self.redTill = time + 0.25
 	self.shield -= damage
 	if self.shield <= 0 then
+		self.shield = 0
 		hud.update
-		text.color = color.orange
-		text.row = 5
-		print "GAME OVER"
-		_printMark "To play again, type `run` and press Return."
-		wait
-		key.clear
-		exit
+		endGame
 	end if
 end function
 
