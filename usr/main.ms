@@ -21,6 +21,7 @@ setup = function
 	vfx.init
 	globals.score = 0
 	hud.init
+	if not (env.hasIndex("curLevel") and 0 < env.curLevel <= 3) then env.curLevel = 1
 end function
 
 update = function(dt=0.017)
@@ -37,11 +38,11 @@ end function
 
 // Main program
 setup
-levels.startLevelWave 2, 1
+levels.startLevelWave env.curLevel, 1
 nextEnemySpawnTime = time + 2
 while true
 	if time > nextEnemySpawnTime then
-		enemy.spawn
+		enemy.spawn enemy.Enemy1
 		nextEnemySpawnTime = time + 3
 	end if
 	update 0.017

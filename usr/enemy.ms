@@ -3,6 +3,7 @@
 import "importUtil"
 ensureImport "renderer"
 ensureImport "mathUtil"
+ensureImport "disp"
 
 globals.Enemy = new Sprite3D
 Enemy.image = file.loadImage("/sys/pics/UFO.png") // for now!
@@ -21,7 +22,10 @@ Enemy.update = function(dt=0.017)
 	// and then stay there
 	dwz = 0
 	dwz = -self.approachSpeed * dt
-	if self.wz < self.minDist then self.wz = self.minDist
+	if self.wz + dwz < self.minDist then
+		self.wz = self.minDist
+		dwz = 0
+	end if
 	super.update dwz, true, false
 	maxDist = renderer.maxDist
 	if self.wz > maxDist - 100 then
@@ -37,10 +41,16 @@ Enemy.update = function(dt=0.017)
 	end if
 end function
 
-Enemy.hitBy = function(projectile)
-	dSqr = (projectile.wx - self.wx)^2 + ((projectile.wy - self.wy) / 0.6)^2
+Enemy.isHitByPoint = function(worldPos)
+	// Note: we only check x and y, because we assume this is only called for
+	// projectiles that have already crossed our Z plane.
+	dSqr = (worldPos.wx - self.wx)^2 + ((worldPos.wy - self.wy) * self.aspectRatio)^2
 //	print "dx: " + round(projectile.wx - self.wx) +   "   dy: " + round((projectile.wy - self.wy)) + "   dSqr: " + round(dSqr) + "  dist: " + round(sqrt(dSqr)) + "    "
-	if dSqr > 3500 then return false
+	return dSqr < self.hitRSqr
+end function
+
+Enemy.hitBy = function(projectile)
+	if not self.isHitByPoint(projectile) then return false
 	self.vanish
 	vfx.spawn vfx.Explosion, self.wx, self.wy, self.wz - 1
 	globals.score += self.scoreValue
@@ -51,6 +61,29 @@ Enemy.vanish = function
 	disp.sprites.removeVal self
 	Enemy.Instances.removeVal self
 end function
+
+
+Enemy1 = new Enemy
+Enemy1.image = file.loadImage("/usr/pics/ufo-1.png")
+Enemy1.aspectRatio = 3.3
+Enemy1.hitRSqr = 24000
+
+Enemy2 = new Enemy
+Enemy2.image = file.loadImage("/usr/pics/ufo-2.png")
+Enemy2.aspectRatio = 2.2
+Enemy2.hitRSqr = 18000
+
+Enemy3 = new Enemy
+Enemy3.image = file.loadImage("/usr/pics/ufo-3.png")
+Enemy3.aspectRatio = 2.2
+Enemy3.hitRSqr = 15000
+
+Enemy4 = new Enemy
+Enemy4.image = file.loadImage("/usr/pics/ufo-4.png")
+Enemy4.aspectRatio = 3
+Enemy4.hitRSqr = 55000
+
+
 
 EnemyShot = new Enemy
 EnemyShot.approachSpeed = 1500
@@ -96,9 +129,9 @@ EnemyShot.hitBy = function(projectile)
 	return true
 end function
 
-spawn = function
-	if Enemy.Instances.len > 2 then return // enemy count cap
-	noob = new Enemy
+spawn = function(enemyClass)
+	if Enemy.Instances.len > 20 then return // enemy count cap
+	noob = new enemyClass
 	noob.wx = mathUtil.randRange(-760, 760)
 	noob.wy = mathUtil.randRange(-490, 490)
 	noob.wz = renderer.maxDist
@@ -112,3 +145,28 @@ updateAll = function(dt=0.017)
 		enemy.update dt
 	end for
 end function
+
+
+testHitbox = function(class)
+	disp.init
+	disp.background.x = 0; disp.background.y = 0
+	globals.obj = new class
+	obj.reset
+	obj.wx = 480
+	obj.wy = 320
+	obj.wz = obj.minDist
+	obj.scale = 0.75
+	disp.sprites.push obj
+	obj.update
+	for y in range(0, 640, 20)
+		for x in range(0, 960, 20)
+			wp = {"wx":x, "wy":y, "wz": obj.wz}
+			if obj.isHitByPoint(wp) then c = color.red else c = color.blue
+			if x == 240 and y == 160 then print wp + " -> " + obj.isHitByPoint(wp)
+			gfx.fillRect x-1, y-1, 3, 3, c
+		end for
+	end for
+end function
+	
+
+if locals == globals then testHitbox Enemy4
