@@ -15,10 +15,12 @@ Enemy.scoreValue = 100
 //Enemy.localBounds = new Bounds
 //Enemy.localBounds.width = Enemy.image.width * 0.9
 //Enemy.localBounds.height = Enemy.image.height * 0.9
-Enemy.secsPerFire = 1
+Enemy.secsPerFire = 3
 Enemy.nextFireTime = 0
+Enemy.age = 0
 
 Enemy.update = function(dt=0.017)
+	self.age += dt
 	// Enemies close distance slowly, until they're close enough,
 	// and then stay there
 	dwz = 0
@@ -69,21 +71,58 @@ Enemy1 = new Enemy
 Enemy1.image = file.loadImage("/usr/pics/ufo-1.png")
 Enemy1.aspectRatio = 3.3
 Enemy1.hitRSqr = 24000
+Enemy1.secsPerFire = 3
+Enemy1.update = function(dt=0.017)
+	super.update
+	self.rotation = 20 * sin(self.age) + 10 * cos(self.age*5)
+end function
+
 
 Enemy2 = new Enemy
 Enemy2.image = file.loadImage("/usr/pics/ufo-2.png")
 Enemy2.aspectRatio = 2.2
 Enemy2.hitRSqr = 18000
+Enemy2.secsPerFire = 2.5
+Enemy2.update = function(dt=0.017)
+	sa = sin(self.age)
+	self.rotation = 10 * sa
+	self.wx += 2 * sa
+	super.update
+end function
 
 Enemy3 = new Enemy
 Enemy3.image = file.loadImage("/usr/pics/ufo-3.png")
 Enemy3.aspectRatio = 2.2
 Enemy3.hitRSqr = 15000
+Enemy3.secsPerFire = 2
+Enemy3.update = function(dt=0.017)
+	if self.age == 0 then
+		self.origX = self.wx
+		self.origY = self.wy
+	end if
+	sa = sin(self.age)
+	self.rotation = 15 * sa
+	self.wx = self.origX + 200 * sa
+	self.wy = self.origY + 50 * sin(self.age*2)
+	super.update
+end function
 
 Enemy4 = new Enemy
 Enemy4.image = file.loadImage("/usr/pics/ufo-4.png")
 Enemy4.aspectRatio = 3
 Enemy4.hitRSqr = 55000
+Enemy4.secsPerFire = 1
+Enemy4.update = function(dt=0.017)
+	if self.age == 0 then
+		self.origX = self.wx
+		self.origY = self.wy
+	end if
+	sa = sin(self.age*2)
+	self.rotation = 15 * sa
+	self.wx = self.origX + 200 * sa
+	self.wy = self.origY + 150 * cos(self.age*2)
+	super.update
+end function
 
 
 
@@ -136,7 +175,7 @@ end function
 
 spawn = function(typeNum)
 	if Enemy.Instances.len > 20 then return // enemy count cap
-	noob = new [Enemy1, Enemy2, Enemy3, Enemy4][typeNum]
+	noob = new [Enemy1, Enemy2, Enemy3, Enemy4][typeNum - 1]
 	noob.wx = mathUtil.randRange(-760, 760)
 	noob.wy = mathUtil.randRange(-490, 490)
 	noob.wz = renderer.maxDist

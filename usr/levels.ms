@@ -18,21 +18,30 @@ startLevelWave = function(level=1, wave=1)
 	if level == 1 then
 		disp.background.image = file.loadImage("/usr/pics/sky-Earth.png")
 		obstacles.init obstacles.Cloud
-		outer.enemyTypes = [1]*10
-		outer.enemyDTs = [4, 2, 2, 2, 5, 1, 1, 1, 0.5, 0.5]
+		outer.enemyTypes = [
+			[1,1,1,1,1,1,1,1,1,2],
+			[1,1,1,1,1,1,1,2,1,2],
+			[1,1,1,1,1,1,2,1,2,2] ][wave-1]		
+		outer.enemyDTs = [3 + 2*(wave==1), 2, 2, 2, 5, 1, 1, 1, 0.5, 0.5]
 	else if level == 2 then
 		disp.background.image = file.loadImage("/usr/pics/sky-orbit.png")
 		obstacles.init obstacles.IBeam
-		outer.enemyTypes = [2]*10
-		outer.enemyDTs = [4, 2, 2, 2, 5, 1, 1, 1, 0.5, 0.5]
+		outer.enemyTypes = [
+			[2,1,2,2,1,2,2,2,2,3],
+			[2,2,1,2,2,2,2,3,2,3],
+			[2,2,2,2,2,2,3,2,3,3] ][wave-1]	
+		outer.enemyDTs = [3, 2, 2, 2, 5, 1, 1, 1, 0.5, 0.5]
 	else
 		disp.background.image = file.loadImage("/usr/pics/sky-space.png")
 		obstacles.init obstacles.Asteroid		
-		outer.enemyTypes = [3]*10
-		outer.enemyDTs = [4, 2, 2, 2, 5, 1, 1, 1, 0.5, 0.5]
+		outer.enemyTypes = [
+			[3,2,3,3,3,3,1,3,3,4],
+			[3,3,2,3,1,3,3,4,3,4],
+			[3,1,3,2,3,3,4,3,4,4] ][wave-1]	
+		outer.enemyDTs = [3, 2, 2, 2, 5, 1, 1, 1, 0.5, 0.5]
 	end if
 	
-	outer.enemyTypes = enemyTypes[:1] // HACK!!!
+	//outer.enemyTypes = enemyTypes[:1] // HACK!!!
 	
 	if enemyDTs.len != enemyTypes.len then
 		outer.enemyDTs += [1] * enemyTypes.len
