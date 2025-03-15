@@ -8,6 +8,7 @@ ensureImport "disp"
 globals.Enemy = new Sprite3D
 Enemy.image = file.loadImage("/sys/pics/UFO.png") // for now!
 Enemy.Instances = []
+Enemy.InvaderCount = 0
 Enemy.minDist = 10
 Enemy.approachSpeed = 200
 Enemy.scoreValue = 100
@@ -60,6 +61,7 @@ end function
 Enemy.vanish = function
 	disp.sprites.removeVal self
 	Enemy.Instances.removeVal self
+	if not self isa EnemyShot then Enemy.InvaderCount -= 1
 end function
 
 
@@ -103,6 +105,7 @@ EnemyShot.Spawn = function(owner)
 	noob.wx = owner.wx; noob.wy = owner.wy; noob.wz = owner.wz-1
 	disp.sprites.insert 1, noob
 	Enemy.Instances.push noob
+	sounds.blorp.play3D self
 	return noob
 end function	
 
@@ -111,7 +114,9 @@ EnemyShot.update = function(dt=0.017)
 		// We've reached the level of the fighter; did we hit it?
 		dSqr = (self.x - fighter.craft.x)^2 + (self.y - fighter.craft.y)^2
 		//print "Dist: " + round(sqrt(dSqr))
-		if dSqr < 10000 then fighter.craft.takeHit sounds.electricalHit, self.damage
+		if not fighter.craft.dead and dSqr < 10000 then
+			fighter.craft.takeHit sounds.electricalHit, self.damage
+		end if
 		self.vanish
 		return
 	end if
@@ -129,14 +134,15 @@ EnemyShot.hitBy = function(projectile)
 	return true
 end function
 
-spawn = function(enemyClass)
+spawn = function(typeNum)
 	if Enemy.Instances.len > 20 then return // enemy count cap
-	noob = new enemyClass
+	noob = new [Enemy1, Enemy2, Enemy3, Enemy4][typeNum]
 	noob.wx = mathUtil.randRange(-760, 760)
 	noob.wy = mathUtil.randRange(-490, 490)
 	noob.wz = renderer.maxDist
 	disp.sprites.insert 1, noob
 	Enemy.Instances.push noob
+	Enemy.InvaderCount += 1
 	return noob
 end function
 

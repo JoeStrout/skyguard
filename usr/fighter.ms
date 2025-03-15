@@ -17,6 +17,7 @@ Craft.shieldRegen = 1 // shield points/sec
 Craft.rolling = false
 Craft.wasInpRollDown = [false, false]  // was left, right roll pressed last frame?
 Craft.lastRollInpTime = [-1, -1]  // input time for left, right rolls
+Craft.dead = false
 
 Craft.updateFlares = function
 	craft.flareBox.x = craft.x
@@ -50,6 +51,7 @@ Craft.fire = function
 	  corners[0][1] - disp.background.y
 	shot.spawn corners[3][0] - disp.background.x, 
 	  corners[3][1] - disp.background.y
+	sounds.pew.play3D craft
 end function
 
 Craft.handleInputs = function(dt=0.017)
@@ -112,6 +114,10 @@ Craft.handleInputs = function(dt=0.017)
 end function
 
 Craft.update = function(dt=0.017)
+	if self.dead then
+		if time - self.deadSince > 2.5 then endGame
+		return
+	end if
 	self.handleInputs dt
 	self.updateFlares
 //	text.row = 25; print "wx:  " + round(self.wx) + "   wy:  " + round(self.wy) + "    "
@@ -131,9 +137,19 @@ Craft.takeHit = function(sound, damage)
 	if self.shield <= 0 then
 		self.shield = 0
 		hud.update
-		endGame
+		self.explode
 	end if
 end function
+
+Craft.explode = function
+	vfx.spawn vfx.Explosion, self.wx, self.wy, 0.1
+	self.dead = true
+	self.deadSince = time
+	disp.fg.sprites.removeVal self
+	disp.fg.sprites.removeVal self.flares[0]
+	disp.fg.sprites.removeVal self.flares[1]	
+end function
+	
 
 init = function
 	outer.craft = new Craft

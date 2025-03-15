@@ -12,7 +12,7 @@ fadeOut = function
 	fader = display(0)
 	for alpha in range(0, 255, 3)
 		fader.color = color.rgba(0,0,0, alpha)
-		if bgm then bgm.adjust 1 - alpha/255
+		if env.bgm then bgm.adjust 1 - alpha/255
 		yield
 	end for
 end function

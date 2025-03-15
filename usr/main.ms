@@ -27,7 +27,7 @@ setup = function
 		bgm.loop = true
 		bgm.play
 	else
-		bgm = null
+		outer.bgm = null
 	end if
 end function
 
@@ -41,13 +41,15 @@ update = function(dt=0.017)
 	enemy.updateAll dt
 	vfx.updateAll dt
 	hud.update
+	levels.update dt
 end function
 
-endGame = function
+endGame = function(message = "GAME OVER", msgColor = "#FF8888")
 	env.lastScore = score
-	text.row = 14; text.column = 29
-	text.color = "#FFAAAA"
-	print "GAME OVER"
+	text.row = 14; text.column = 34 - message.len/2
+	text.color = msgColor
+	print message
+	wait
 	display(0).mode = displayMode.solidColor
 	fader = display(0)
 	for alpha in range(0, 255, 1)
@@ -64,12 +66,7 @@ end function
 // Main program
 setup
 levels.startLevelWave env.curLevel, 1
-nextEnemySpawnTime = time + 2
 while true
-	if time > nextEnemySpawnTime then
-		enemy.spawn enemy.Enemy1
-		nextEnemySpawnTime = time + 3
-	end if
 	update 0.017
 	yield
 end while

@@ -50,6 +50,7 @@ IBeam.hitBy = function(projectile)
 	vfx.spawn vfx.Explosion, self.wx, self.wy + 200, self.wz - 1
 	vfx.spawn vfx.Explosion, self.wx, self.wy - 200, self.wz - 1
 	self.reset
+	globals.score += 2
 	return true
 end function
 

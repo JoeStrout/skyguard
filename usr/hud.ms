@@ -2,6 +2,7 @@
 
 _lastScore = -1
 _lastShield = -1
+_lastEnemies = -1
 
 init = function
 	display(2).mode = displayMode.text
@@ -28,6 +29,17 @@ update = function(forceRedraw = false)
 		text.row = 25
 		text.column = 1
 		print "SHIELD: " + s + "   "
-		_lastShield = s
+		outer._lastShield = s
 	end if
+	
+	count = Enemy.InvaderCount
+	if count != _lastEnemies then
+		outer._lastEnemies = count
+		s = "INVADERS: " + str(count) + " "
+		if count == 0 then s = " " * s.len
+		text.row = 25
+		text.column = 28
+		print s
+	end if		
+	
 end  function
